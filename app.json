@@ -54,7 +54,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "0223d245-20a3-41c1-a6df-f1e7c75fb17f"
+        "projectId": "c7d15518-d1c1-4909-941f-b7842ea0ac6f"
       }
     },
     "owner": "mayraamaral",
@@ -62,7 +62,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/0223d245-20a3-41c1-a6df-f1e7c75fb17f"
+      "url": "https://u.expo.dev/c7d15518-d1c1-4909-941f-b7842ea0ac6f"
     }
   }
 }

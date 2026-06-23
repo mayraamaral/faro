@@ -2,14 +2,13 @@ import { z } from "zod";
 
 export const signupSchema = z.object({
   role: z.enum(["adotante", "doador", "abrigo"], { 
-    required_error: "Selecione como você quer usar o app",
-    invalid_type_error: "Selecione um perfil válido"
+    message: "Selecione um perfil válido"
   }),
   name: z.string().optional(),
   tradeName: z.string().optional(),
   corporateName: z.string().optional(),
   cnpj: z.string().optional(),
-  email: z.string().email("E-mail inválido").min(1, "E-mail é obrigatório"),
+  email: z.email({ error: "E-mail inválido" }),
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
 }).superRefine((data, ctx) => {
   if (data.role === "adotante" || data.role === "doador") {

@@ -48,5 +48,6 @@ supabase/.temp
 
 # Opencode config
 .opencode/
+.sisyphus/*
 
 .playwright-mcp
