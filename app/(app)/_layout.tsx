@@ -23,6 +23,7 @@ export default function AppLayout() {
       <Stack.Screen name="user-info" />
       <Stack.Screen name="chat/[conversation_id]" />
       <Stack.Screen name="adoption-status/[adoption_id]" />
+      <Stack.Screen name="favorites" />
     </Stack>
   );
 }
