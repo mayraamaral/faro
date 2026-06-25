@@ -185,6 +185,20 @@ export class SupabaseChatRepository implements ChatRepository {
   }
 
   async getMyConversations(viewer: CurrentUserEntity): Promise<ConversationListItem[]> {
+    return this.loadConversations(viewer, null);
+  }
+
+  async getConversationsForAnimal(
+    animalId: string,
+    viewer: CurrentUserEntity,
+  ): Promise<ConversationListItem[]> {
+    return this.loadConversations(viewer, animalId);
+  }
+
+  private async loadConversations(
+    viewer: CurrentUserEntity,
+    animalId: string | null,
+  ): Promise<ConversationListItem[]> {
     const { data, error } = await supabase
       .from("adoption_conversations")
       .select(
@@ -222,10 +236,12 @@ export class SupabaseChatRepository implements ChatRepository {
     const filtered = rows.filter((row) => {
       const adoption = getAdoption(row);
       if (!adoption) return false;
+      const animal = getAnimal(adoption);
+      if (animalId && animal?.id !== animalId) return false;
       if (viewer.isAdopter) {
         return getAdopterProfile(adoption)?.user_id === viewer.userId;
       }
-      return getListerProfile(getAnimal(adoption))?.user_id === viewer.userId;
+      return getListerProfile(animal)?.user_id === viewer.userId;
     });
 
     if (filtered.length === 0) return [];

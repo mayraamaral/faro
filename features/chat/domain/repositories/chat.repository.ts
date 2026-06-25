@@ -10,6 +10,10 @@ export interface ChatRepository {
   createConversation(adoptionId: string): Promise<Conversation>;
   getConversationByAdoptionId(adoptionId: string): Promise<Conversation | null>;
   getMyConversations(viewer: CurrentUserEntity): Promise<ConversationListItem[]>;
+  getConversationsForAnimal(
+    animalId: string,
+    viewer: CurrentUserEntity,
+  ): Promise<ConversationListItem[]>;
   getConversationHeader(
     conversationId: string,
     viewer: CurrentUserEntity

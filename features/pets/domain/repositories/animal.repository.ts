@@ -14,10 +14,49 @@ export type ListerContext = {
   listerProfileId: string | null;
 };
 
+export type ExistingAnimalPhoto = {
+  storagePath: string;
+  signedUrl: string;
+};
+
+export type AnimalDetail = {
+  id: string;
+  name: string;
+  species: string;
+  sex: string;
+  size: string;
+  birthDate: string;
+  latitude: number;
+  longitude: number;
+  city: string;
+  state: string;
+  country: string;
+  healthNotes: string | null;
+  behaviorNotes: string | null;
+  interestingFacts: string | null;
+  isNeutered: boolean;
+  isVaccinated: boolean;
+  adoptionStatus: string;
+  existingPhotos: ExistingAnimalPhoto[];
+};
+
 export interface AnimalRepository {
   getListerContextByUserId(userId: string): Promise<ListerContext>;
   hasAnimalsForLister(listerProfileId: string): Promise<boolean>;
   getAnimalsForLister(listerProfileId: string): Promise<ListerAnimal[]>;
+  getAnimalDetailForLister(
+    listerProfileId: string,
+    animalId: string,
+  ): Promise<AnimalDetail | null>;
+  updateForLister(
+    listerProfileId: string,
+    animalId: string,
+    entity: AnimalRegistrationEntity,
+  ): Promise<void>;
+  replaceAnimalPhotos(
+    animalId: string,
+    storagePaths: string[],
+  ): Promise<void>;
   getNearbyAnimals(
     lat: number,
     lng: number,

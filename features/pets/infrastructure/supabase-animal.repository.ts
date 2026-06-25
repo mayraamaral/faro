@@ -2,10 +2,11 @@ import { supabase } from "@/lib/supabase";
 import { extractStoragePath } from "../utils/extract-storage-path";
 import { mapSupabasePetSearchError } from "./supabase-pet-search-error-mapper";
 import type { AnimalRepository } from "../domain/repositories/animal.repository";
+import type { AnimalDetail, ExistingAnimalPhoto } from "../domain/repositories/animal.repository";
 import type { Adoption } from "../domain/entities/adoption.entity";
 import type { AnimalRegistrationEntity } from "../domain/entities/animal-registration.entity";
 import type { UserRole } from "../domain/entities/current-user.entity";
-import type { ListerAnimal } from "../domain/entities/lister-animal.entity";
+import { toListerAnimal, type ListerAnimal } from "../domain/entities/lister-animal.entity";
 import type { AdopterAnimal } from "../domain/entities/adopter-animal.entity";
 import {
   ANIMAL_AGE_CATEGORY_VALUES,
@@ -211,7 +212,7 @@ export class SupabaseAnimalRepository implements AnimalRepository {
       // Sort photos by display_order if it was fetched, but here we just take the first one
       const photos = row.animal_photos || [];
       const photoPath = photos.length > 0 ? photos[0].photo_url : null;
-      let photoUrl = null;
+      let photoUrl: string | null = null;
 
       if (photoPath) {
         const storagePath = extractStoragePath(photoPath);
@@ -219,13 +220,13 @@ export class SupabaseAnimalRepository implements AnimalRepository {
         const { data: urlData } = await supabase.storage
           .from(process.env.EXPO_PUBLIC_SUPABASE_ANIMALS_BUCKET || "animals")
           .createSignedUrl(storagePath, 60 * 60); // 1 hour
-        
+
         if (urlData?.signedUrl) {
           photoUrl = urlData.signedUrl;
         }
       }
 
-      return {
+      return toListerAnimal({
         id: row.id,
         name: row.name,
         species: row.species,
@@ -236,10 +237,144 @@ export class SupabaseAnimalRepository implements AnimalRepository {
         state: row.state,
         adoptionStatus: row.adoption_status,
         photoUrl,
-      };
+      });
     }));
 
     return animals;
+  }
+
+  async getAnimalDetailForLister(
+    listerProfileId: string,
+    animalId: string,
+  ): Promise<AnimalDetail | null> {
+    const { data, error } = await supabase
+      .from("animals")
+      .select(
+        `
+        id,
+        name,
+        species,
+        sex,
+        size,
+        birth_date,
+        latitude,
+        longitude,
+        city,
+        state,
+        country,
+        health_notes,
+        behavior_notes,
+        interesting_facts,
+        is_neutered,
+        is_vaccinated,
+        adoption_status,
+        animal_photos (
+          photo_url
+        )
+      `,
+      )
+      .eq("id", animalId)
+      .eq("lister_profile_id", listerProfileId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    const row = data as unknown as {
+      id: string;
+      name: string;
+      species: string;
+      sex: string;
+      size: string;
+      birth_date: string;
+      latitude: number;
+      longitude: number;
+      city: string;
+      state: string;
+      country: string;
+      health_notes: string | null;
+      behavior_notes: string | null;
+      interesting_facts: string | null;
+      is_neutered: boolean;
+      is_vaccinated: boolean;
+      adoption_status: string;
+      animal_photos: AnimalPhotoRow[] | null;
+    };
+
+    const photoRows = (row.animal_photos ?? [])
+      .map((photo) => photo.photo_url)
+      .filter((path): path is string => Boolean(path));
+
+    const existingPhotos: ExistingAnimalPhoto[] = await Promise.all(
+      photoRows.map(async (photoUrl) => {
+        const storagePath = extractStoragePath(photoUrl);
+        const { data: urlData } = await supabase.storage
+          .from(process.env.EXPO_PUBLIC_SUPABASE_ANIMALS_BUCKET || "animals")
+          .createSignedUrl(storagePath, 60 * 60);
+        return { storagePath, signedUrl: urlData?.signedUrl ?? photoUrl };
+      }),
+    );
+
+    return {
+      id: row.id,
+      name: row.name,
+      species: row.species,
+      sex: row.sex,
+      size: row.size,
+      birthDate: row.birth_date,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      city: row.city,
+      state: row.state,
+      country: row.country,
+      healthNotes: row.health_notes,
+      behaviorNotes: row.behavior_notes,
+      interestingFacts: row.interesting_facts,
+      isNeutered: row.is_neutered,
+      isVaccinated: row.is_vaccinated,
+      adoptionStatus: row.adoption_status,
+      existingPhotos,
+    };
+  }
+
+  async updateForLister(
+    listerProfileId: string,
+    animalId: string,
+    entity: AnimalRegistrationEntity,
+  ): Promise<void> {
+    const { error } = await supabase
+      .from("animals")
+      .update(entity.toPersistence())
+      .eq("id", animalId)
+      .eq("lister_profile_id", listerProfileId);
+
+    if (error) throw error;
+  }
+
+  async replaceAnimalPhotos(
+    animalId: string,
+    storagePaths: string[],
+  ): Promise<void> {
+    const { error: deleteError } = await supabase
+      .from("animal_photos")
+      .delete()
+      .eq("animal_id", animalId);
+
+    if (deleteError) throw deleteError;
+
+    if (storagePaths.length === 0) return;
+
+    const photoPayloads = storagePaths.map((path, index) => ({
+      animal_id: animalId,
+      photo_url: path,
+      display_order: index,
+    }));
+
+    const { error: insertError } = await supabase
+      .from("animal_photos")
+      .insert(photoPayloads);
+
+    if (insertError) throw insertError;
   }
 
   async hasAnimalsForLister(listerProfileId: string): Promise<boolean> {
