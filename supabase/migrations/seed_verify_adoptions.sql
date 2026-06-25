@@ -34,9 +34,12 @@ BEGIN
   INSERT INTO public.adopter_profiles (id, user_id, full_name, phone_number, document_number, birth_date) 
   VALUES (adopter2_profile_id, adopter2_user_id, 'Test Adopter 2', '123', '123', '2000-01-01');
 
-  -- Insert animal (is_available defaults to true)
-  INSERT INTO public.animals (id, lister_profile_id, name, species, photo_url, birth_date, latitude, longitude)
-  VALUES (animal_id, lister_profile_id, 'Fluffy', 'DOG', 'http://photo', '2023-01-01', 0, 0);
+  -- Insert animal and its primary photo (is_available defaults to true)
+  INSERT INTO public.animals (id, lister_profile_id, name, species, birth_date, latitude, longitude)
+  VALUES (animal_id, lister_profile_id, 'Fluffy', 'DOG', '2023-01-01', 0, 0);
+
+  INSERT INTO public.animal_photos (animal_id, photo_url, display_order)
+  VALUES (animal_id, 'http://photo', 0);
 
   -- Assert initial state
   ASSERT (SELECT is_available FROM public.animals WHERE id = animal_id) = true, 'Animal should be available initially';

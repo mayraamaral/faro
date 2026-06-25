@@ -52,6 +52,33 @@ export function FindPetScreen() {
 
   const actionsDisabled = isLoading || !currentAnimal;
 
+  const openCurrentAnimalProfile = useCallback(() => {
+    if (!currentAnimal) return;
+
+    router.push({
+      pathname: "./pet-profile",
+      params: {
+        id: currentAnimal.id,
+        name: currentAnimal.name,
+        species: currentAnimal.species,
+        sex: currentAnimal.sex,
+        size: currentAnimal.size,
+        birthDate: currentAnimal.birthDate,
+        city: currentAnimal.city,
+        state: currentAnimal.state,
+        distanceKm: String(currentAnimal.distanceKm),
+        photoUrl: currentAnimal.photoUrl ?? "",
+        healthNotes: currentAnimal.healthNotes ?? "",
+        behaviorNotes: currentAnimal.behaviorNotes ?? "",
+        interestingFacts: currentAnimal.interestingFacts ?? "",
+        isVaccinated:
+          currentAnimal.isVaccinated === null ? "" : String(currentAnimal.isVaccinated),
+        isNeutered:
+          currentAnimal.isNeutered === null ? "" : String(currentAnimal.isNeutered),
+      },
+    });
+  }, [currentAnimal, router]);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       {/* Header */}
@@ -102,34 +129,44 @@ export function FindPetScreen() {
             onSwipeLeft={() => handleRejectRef.current()}
             onSwipeRight={() => handleAcceptRef.current()}
           >
-            <View
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir perfil de ${currentAnimal.name}`}
+              onPress={openCurrentAnimalProfile}
               style={[
                 styles.card,
                 { width: animalCardSize, height: animalCardSize },
               ]}
             >
               {currentAnimal.photoUrl ? (
-              <>
-                <Image
-                  key={`${currentAnimal.id}-${currentAnimal.photoUrl}`}
-                  source={{ uri: currentAnimal.photoUrl }}
-                  style={[
-                    styles.animalImage,
-                    isPhotoLoading && styles.animalImageHidden,
-                  ]}
-                  resizeMode="cover"
-                  onLoadEnd={() => setIsPhotoLoading(false)}
-                  onError={() => setIsPhotoLoading(false)}
-                />
-                {isPhotoLoading ? (
-                  <View style={styles.photoLoadingOverlay} pointerEvents="none">
-                    <ActivityIndicator size="large" color={tokens.colors.gray[500]} />
-                  </View>
-                ) : null}
-              </>
-            ) : (
-              <View style={styles.animalImagePlaceholder} />
-            )}
+                <>
+                  <Image
+                    key={`${currentAnimal.id}-${currentAnimal.photoUrl}-backdrop`}
+                    source={{ uri: currentAnimal.photoUrl }}
+                    style={styles.animalImageBackdrop}
+                    resizeMode="cover"
+                    blurRadius={18}
+                  />
+                  <Image
+                    key={`${currentAnimal.id}-${currentAnimal.photoUrl}`}
+                    source={{ uri: currentAnimal.photoUrl }}
+                    style={[
+                      styles.animalImage,
+                      isPhotoLoading && styles.animalImageHidden,
+                    ]}
+                    resizeMode="contain"
+                    onLoadEnd={() => setIsPhotoLoading(false)}
+                    onError={() => setIsPhotoLoading(false)}
+                  />
+                  {isPhotoLoading ? (
+                    <View style={styles.photoLoadingOverlay} pointerEvents="none">
+                      <ActivityIndicator size="large" color={tokens.colors.gray[500]} />
+                    </View>
+                  ) : null}
+                </>
+              ) : (
+                <View style={styles.animalImagePlaceholder} />
+              )}
 
               <View style={styles.badgeContainer}>
                 <Text style={styles.badgeText}>
@@ -138,7 +175,7 @@ export function FindPetScreen() {
                   {Math.max(1, Math.round(currentAnimal.distanceKm))} KM
                 </Text>
               </View>
-            </View>
+            </Pressable>
           </SwipeableCard>
         )}
       </View>
@@ -212,7 +249,7 @@ const styles = StyleSheet.create({
     overflow: "visible",
   },
   card: {
-    backgroundColor: tokens.colors.brand.green,
+    backgroundColor: tokens.colors.gray[300],
     borderRadius: tokens.radius.xl,
     overflow: "hidden",
     position: "relative",
@@ -223,6 +260,11 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     position: "absolute",
+    zIndex: 1,
+  },
+  animalImageBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    transform: [{ scale: 1.08 }],
     zIndex: 0,
   },
   animalImageHidden: {
@@ -248,7 +290,8 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[2],
     paddingHorizontal: tokens.spacing[4],
     borderRadius: tokens.radius.sm,
-    zIndex: 3,
+    elevation: 4,
+    zIndex: 4,
   },
   badgeText: {
     fontFamily: Fonts.secondary,

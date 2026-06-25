@@ -306,7 +306,7 @@ REVOKE UPDATE ON public.animals FROM authenticated;
 REVOKE UPDATE ON public.animals FROM anon;
 
 GRANT UPDATE (
-  name, species, photo_url, birth_date, latitude, longitude, 
+  name, species, birth_date, latitude, longitude,
   city, state, country, health_notes, behavior_notes, 
   interesting_facts, adoption_status, is_neutered, is_vaccinated, 
   size, sex, deleted_at, updated_at
