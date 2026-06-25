@@ -2,12 +2,14 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { TopBar } from "@/components/ui/top-bar";
 import { Fonts } from "@/constants/theme";
@@ -172,6 +174,29 @@ export function UserInfoScreen() {
             ) : null}
           </View>
 
+          {profile?.role === "ADOPTER" ? (
+            <View style={styles.section}>
+              <Pressable
+                style={styles.favoritesRow}
+                onPress={() => router.push("/favorites" as never)}
+              >
+                <View style={styles.favoritesRowLeft}>
+                  <MaterialCommunityIcons
+                    name="heart-outline"
+                    size={22}
+                    color={tokens.colors.brand.primary}
+                  />
+                  <Text style={styles.favoritesRowLabel}>Favoritos</Text>
+                </View>
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={22}
+                  color={tokens.colors.gray[400]}
+                />
+              </Pressable>
+            </View>
+          ) : null}
+
           {isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator
@@ -296,5 +321,21 @@ const styles = StyleSheet.create({
     fontSize: tokens.fontSize.sm,
     color: tokens.colors.red[500],
     textAlign: "center",
+  },
+  favoritesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: tokens.spacing[1],
+  },
+  favoritesRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[3],
+  },
+  favoritesRowLabel: {
+    fontFamily: Fonts.primary,
+    fontSize: tokens.fontSize.base,
+    color: tokens.colors.gray[900],
   },
 });

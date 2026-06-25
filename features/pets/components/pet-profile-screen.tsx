@@ -1,11 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { Button } from "@/components/ui/button";
 import { Fonts } from "@/constants/theme";
 import { tokens } from "@/constants/tokens";
+import { useToggleFavorite } from "@/features/favorites/hooks/use-toggle-favorite";
 import { formatPetAgeLabel } from "../utils/format-pet-age-label";
 
 type PetProfileData = {
@@ -115,6 +116,8 @@ export function PetProfileScreen({ animal }: PetProfileScreenProps) {
   const aboutItems = buildAboutItems(animal);
   const ageLabel = formatPetAgeLabel(animal.birthDate);
 
+  const { isFavorited, isToggling, toggle } = useToggleFavorite(animal.id);
+
   const showInterestConfirmation = () => {
     Alert.alert(
       "Interesse registrado",
@@ -127,6 +130,26 @@ export function PetProfileScreen({ animal }: PetProfileScreenProps) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Perfil de {animal.name}</Text>
+          <Pressable
+            style={styles.favoriteButton}
+            onPress={toggle}
+            disabled={isToggling}
+            accessibilityLabel={
+              isFavorited
+                ? `Remover ${animal.name} dos favoritos`
+                : `Adicionar ${animal.name} aos favoritos`
+            }
+          >
+            <MaterialCommunityIcons
+              name={isFavorited ? "heart" : "heart-outline"}
+              size={28}
+              color={
+                isFavorited
+                  ? tokens.colors.red[500]
+                  : tokens.colors.gray[400]
+              }
+            />
+          </Pressable>
         </View>
 
         <View style={styles.profileCard}>
@@ -214,11 +237,20 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colors.white,
   },
   header: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     paddingHorizontal: tokens.spacing[6],
     paddingVertical: tokens.spacing[8],
     backgroundColor: tokens.colors.white,
+  },
+  favoriteButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: tokens.colors.gray[100],
   },
   headerTitle: {
     fontFamily: Fonts.bold,
