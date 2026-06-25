@@ -42,6 +42,7 @@ type ConversationWithAdoptionRow = ConversationRow & {
   adoptions:
     | {
         id: string;
+        status: string;
         adopter_profile_id: string | null;
         adopter_profile: AdopterProfileEmbedded | null;
         animals:
@@ -278,7 +279,11 @@ export class SupabaseChatRepository implements ChatRepository {
   async getConversationHeader(
     conversationId: string,
     viewer: CurrentUserEntity
-  ): Promise<{ counterpartyName: string }> {
+  ): Promise<{
+    counterpartyName: string;
+    adoptionId: string;
+    adoptionStatus: string;
+  }> {
     const { data, error } = await supabase
       .from("adoption_conversations")
       .select(
@@ -288,6 +293,7 @@ export class SupabaseChatRepository implements ChatRepository {
         created_at,
         adoptions:adoption_id (
           id,
+          status,
           adopter_profile_id,
           adopter_profile:adopter_profile_id (
             id,
@@ -316,11 +322,19 @@ export class SupabaseChatRepository implements ChatRepository {
       throw mapSupabaseChatError({ message: "Not found" }, "CONVERSATION_NOT_FOUND");
     }
 
+    const row = data as unknown as ConversationWithAdoptionRow;
+    const adoption = getAdoption(row);
+    if (!adoption) {
+      throw mapSupabaseChatError(
+        { message: "Adoption missing" },
+        "CONVERSATION_NOT_FOUND",
+      );
+    }
+
     return {
-      counterpartyName: resolveCounterpartyName(
-        data as unknown as ConversationWithAdoptionRow,
-        viewer
-      ),
+      counterpartyName: resolveCounterpartyName(row, viewer),
+      adoptionId: adoption.id,
+      adoptionStatus: adoption.status,
     };
   }
 }

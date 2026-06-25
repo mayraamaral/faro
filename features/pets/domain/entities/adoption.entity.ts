@@ -1,6 +1,36 @@
-export const ADOPTION_ACTIVE_STATUSES = ["IN_PROGRESS", "UNDER_REVIEW"] as const;
+export const ADOPTION_STATUS_VALUES = [
+  "UNDER_REVIEW",
+  "IN_PROGRESS",
+  "VISIT_PENDING",
+  "VISITED",
+  "IN_ADAPTATION",
+  "ADOPTED",
+  "CANCELED",
+  "REJECTED",
+] as const;
+
+export type AdoptionStatus = (typeof ADOPTION_STATUS_VALUES)[number];
+
+export const ADOPTION_STATUS_LABELS: Record<AdoptionStatus, string> = {
+  UNDER_REVIEW: "Em análise",
+  IN_PROGRESS: "Em andamento",
+  VISIT_PENDING: "Visita agendada",
+  VISITED: "Visita realizada",
+  IN_ADAPTATION: "Em adaptação",
+  ADOPTED: "Adotado",
+  CANCELED: "Cancelado",
+  REJECTED: "Recusado",
+};
+
+export const ADOPTION_ACTIVE_STATUSES = [
+  "UNDER_REVIEW",
+  "IN_PROGRESS",
+] as const;
 
 export type AdoptionActiveStatus = (typeof ADOPTION_ACTIVE_STATUSES)[number];
+
+export const isAdoptionStatus = (value: string): value is AdoptionStatus =>
+  ADOPTION_STATUS_VALUES.includes(value as AdoptionStatus);
 
 export type Adoption = {
   id: string;

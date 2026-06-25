@@ -2,14 +2,21 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Fonts } from "@/constants/theme";
 import { tokens } from "@/constants/tokens";
 
 type ChatHeaderProps = {
   counterpartyName: string;
+  canEditStatus?: boolean;
+  onEditStatus?: () => void;
 };
 
-export function ChatHeader({ counterpartyName }: ChatHeaderProps) {
+export function ChatHeader({
+  counterpartyName,
+  canEditStatus = false,
+  onEditStatus,
+}: ChatHeaderProps) {
   const router = useRouter();
 
   return (
@@ -36,6 +43,22 @@ export function ChatHeader({ counterpartyName }: ChatHeaderProps) {
       <Text style={styles.title} numberOfLines={1}>
         {counterpartyName}
       </Text>
+      {canEditStatus && onEditStatus ? (
+        <Pressable
+          onPress={onEditStatus}
+          style={styles.editButton}
+          accessibilityRole="button"
+          accessibilityLabel="Editar status da adoção"
+          hitSlop={8}
+        >
+          <IconSymbol
+            name="square.and.pencil"
+            size={28}
+            color={tokens.colors.brand.green}
+            weight="bold"
+          />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -66,5 +89,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     fontSize: tokens.fontSize["2xl"],
     color: tokens.colors.brand.primary,
+  },
+  editButton: {
+    padding: tokens.spacing[1],
   },
 });
