@@ -14,8 +14,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/button";
+import { TopBar } from "@/components/ui/top-bar";
 import { Fonts } from "@/constants/theme";
 import { tokens } from "@/constants/tokens";
+import { useAuth } from "@/features/auth/context/auth.context";
+import { AuthUserEntity } from "@/features/auth/domain/entities/auth-user.entity";
 import {
   ANIMAL_SEARCH_RADIUS_MAX_KM,
   ANIMAL_SEARCH_RADIUS_MIN_KM,
@@ -97,6 +100,8 @@ function SearchResultCard({ animal }: { animal: AdopterAnimal }) {
 
 export function SearchPetsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const userInitial = AuthUserEntity.fromSupabase(user).initial;
   const {
     options,
     filters,
@@ -119,22 +124,11 @@ export function SearchPetsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.backButton}
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-        >
-          <MaterialCommunityIcons
-            name="arrow-left"
-            size={28}
-            color={tokens.colors.brand.orange}
-          />
-        </Pressable>
-        <Text style={styles.headerTitle}>Filtros de busca</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <TopBar
+        userInitial={userInitial}
+        onPressAvatar={() => router.push("/user-info" as never)}
+        onPressSettings={() => router.push("/settings" as never)}
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -283,26 +277,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: tokens.colors.white,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: tokens.spacing[6],
-    paddingVertical: tokens.spacing[4],
-    backgroundColor: tokens.colors.white,
-  },
-  backButton: {
-    padding: tokens.spacing[2],
-    marginLeft: -tokens.spacing[2],
-  },
-  headerTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: tokens.fontSize["2xl"],
-    color: tokens.colors.brand.primary,
-  },
-  headerSpacer: {
-    width: 28 + tokens.spacing[2] * 2,
   },
   scrollView: {
     flex: 1,
