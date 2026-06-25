@@ -19,6 +19,8 @@ export default function AppLayout() {
       <Stack.Screen name="my-pets/edit/[animal_id]" />
       <Stack.Screen name="my-pets/[animal_id]/interested" />
       <Stack.Screen name="add-animal" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="user-info" />
       <Stack.Screen name="chat/[conversation_id]" />
     </Stack>
   );

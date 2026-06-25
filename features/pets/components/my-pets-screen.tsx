@@ -11,10 +11,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AddAnimalSvg from "@/assets/images/add-animal.svg";
-import { LogoWordmark } from "@/components/ui/logo-wordmark";
+import { TopBar } from "@/components/ui/top-bar";
 import { Fonts } from "@/constants/theme";
 import { tokens } from "@/constants/tokens";
 import { useAuth } from "@/features/auth/context/auth.context";
+import { AuthUserEntity } from "@/features/auth/domain/entities/auth-user.entity";
 import type { ListerAnimal } from "../domain/entities/lister-animal.entity";
 import { useListerHome } from "../hooks/use-lister-home";
 
@@ -116,8 +117,9 @@ function MyPetCard({ animal, onEdit, onViewInterested }: MyPetCardProps) {
 
 export function MyPetsScreen() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user } = useAuth();
   const { isLoading, isLister, hasAnimals, animals, refresh } = useListerHome();
+  const userInitial = AuthUserEntity.fromSupabase(user).initial;
 
   if (isLoading) {
     return (
@@ -148,22 +150,12 @@ export function MyPetsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <View style={styles.headerWrapper}>
-        <View style={styles.header}>
-          <LogoWordmark size="sm" />
-          <Pressable
-            onPress={() => {
-              void logout();
-            }}
-            style={styles.logoutButton}
-            accessibilityRole="button"
-            accessibilityLabel="Sair"
-          >
-            <Text style={styles.logoutText}>Sair</Text>
-          </Pressable>
-        </View>
-      </View>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <TopBar
+        userInitial={userInitial}
+        onPressAvatar={() => router.push("/user-info" as never)}
+        onPressSettings={() => router.push("/settings" as never)}
+      />
 
       <View style={styles.content}>
         {hasAnimals ? (
@@ -231,29 +223,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: tokens.colors.white,
-  },
-  headerWrapper: {
-    backgroundColor: tokens.colors.white,
-  },
-  header: {
-    paddingVertical: tokens.spacing[4],
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-  logoutButton: {
-    position: "absolute",
-    right: tokens.spacing[5],
-    top: 0,
-    bottom: 0,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing[2],
-    paddingVertical: tokens.spacing[1],
-  },
-  logoutText: {
-    fontFamily: Fonts.medium,
-    fontSize: tokens.fontSize.sm,
-    color: tokens.colors.brand.primary,
   },
   content: {
     flex: 1,

@@ -10,6 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { TopBar } from "@/components/ui/top-bar";
+import { useAuth } from "@/features/auth/context/auth.context";
+import { AuthUserEntity } from "@/features/auth/domain/entities/auth-user.entity";
 import { Fonts } from "@/constants/theme";
 import { tokens } from "@/constants/tokens";
 import { useChatIdentity } from "../hooks/use-chat-identity";
@@ -67,9 +70,11 @@ function ConversationRow({
 
 export function ConversationsListScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const identity = useChatIdentity();
   const state = useMyConversations(identity);
   const refresh = state.refresh;
+  const userInitial = AuthUserEntity.fromSupabase(user).initial;
 
   useFocusEffect(
     useCallback(() => {
@@ -82,6 +87,11 @@ export function ConversationsListScreen() {
   if (state.status === "loading") {
     return (
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <TopBar
+          userInitial={userInitial}
+          onPressAvatar={() => router.push("/user-info" as never)}
+          onPressSettings={() => router.push("/settings" as never)}
+        />
         <View style={styles.center}>
           <ActivityIndicator color={tokens.colors.brand.primary} size="large" />
         </View>
@@ -92,6 +102,11 @@ export function ConversationsListScreen() {
   if (state.status === "error") {
     return (
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
+        <TopBar
+          userInitial={userInitial}
+          onPressAvatar={() => router.push("/user-info" as never)}
+          onPressSettings={() => router.push("/settings" as never)}
+        />
         <View style={styles.center}>
           <Text style={styles.errorText}>{state.message}</Text>
           <Pressable
@@ -111,9 +126,11 @@ export function ConversationsListScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Conversas</Text>
-      </View>
+      <TopBar
+        userInitial={userInitial}
+        onPressAvatar={() => router.push("/user-info" as never)}
+        onPressSettings={() => router.push("/settings" as never)}
+      />
       <View style={styles.listContainer}>
       {state.conversations.length === 0 ? (
         <View style={styles.center}>
@@ -143,16 +160,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: tokens.colors.white,
-  },
-  header: {
-    paddingHorizontal: tokens.spacing[6],
-    paddingVertical: tokens.spacing[4],
-    backgroundColor: tokens.colors.white,
-  },
-  headerTitle: {
-    fontFamily: Fonts.bold,
-    fontSize: tokens.fontSize["2xl"],
-    color: tokens.colors.brand.primary,
   },
   listContainer: {
     flex: 1,
