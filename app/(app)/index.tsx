@@ -3,9 +3,8 @@ import { Redirect } from "expo-router";
 
 import { SplashLoader } from "@/components/ui/splash-loader";
 import { useAuth } from "@/features/auth/context/auth.context";
+import type { UserRole } from "@/features/pets/domain/entities/current-user.entity";
 import { supabase } from "@/lib/supabase";
-
-type UserRole = "ADOPTER" | "LISTER";
 
 export default function AppIndexRoute() {
   const { user } = useAuth();

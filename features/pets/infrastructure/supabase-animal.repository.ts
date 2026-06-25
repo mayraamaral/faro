@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { extractStoragePath } from "../utils/extract-storage-path";
 import { mapSupabasePetSearchError } from "./supabase-pet-search-error-mapper";
 import type { AnimalRepository } from "../domain/repositories/animal.repository";
+import type { Adoption } from "../domain/entities/adoption.entity";
 import type { AnimalRegistrationEntity } from "../domain/entities/animal-registration.entity";
 import type { UserRole } from "../domain/entities/current-user.entity";
 import type { ListerAnimal } from "../domain/entities/lister-animal.entity";
@@ -62,6 +63,22 @@ type SearchOptionRow = {
   display_order: number;
 };
 
+type AdoptionRow = {
+  id: string;
+  animal_id: string;
+  adopter_profile_id: string | null;
+  status: string;
+  created_at: string;
+};
+
+const toAdoption = (row: AdoptionRow): Adoption => ({
+  id: row.id,
+  animalId: row.animal_id,
+  adopterProfileId: row.adopter_profile_id,
+  status: row.status,
+  createdAt: row.created_at,
+});
+
 const isAnimalCategory = (value: string): value is AnimalCategory =>
   ANIMAL_CATEGORY_VALUES.includes(value as AnimalCategory);
 
@@ -87,6 +104,7 @@ function toSearchOption<TValue extends string>(
 
 export class SupabaseAnimalRepository implements AnimalRepository {
   async getListerContextByUserId(userId: string): Promise<{
+    userId: string;
     role: UserRole | null;
     listerProfileId: string | null;
   }> {
@@ -98,6 +116,7 @@ export class SupabaseAnimalRepository implements AnimalRepository {
 
     if (roleError || !userRow) {
       return {
+        userId,
         role: null,
         listerProfileId: null,
       };
@@ -105,6 +124,7 @@ export class SupabaseAnimalRepository implements AnimalRepository {
 
     if (userRow.role !== "LISTER") {
       return {
+        userId,
         role: userRow.role as UserRole,
         listerProfileId: null,
       };
@@ -118,12 +138,14 @@ export class SupabaseAnimalRepository implements AnimalRepository {
 
     if (listerError || !listerProfile) {
       return {
+        userId,
         role: "LISTER",
         listerProfileId: null,
       };
     }
 
     return {
+      userId,
       role: "LISTER",
       listerProfileId: listerProfile.id,
     };
@@ -306,5 +328,43 @@ export class SupabaseAnimalRepository implements AnimalRepository {
         .filter((row) => row.option_group === "AGE")
         .map((row) => toSearchOption(row, isAnimalAgeCategory)),
     };
+  }
+
+  async getOrCreateActiveAdoption(
+    animalId: string,
+    adopterProfileId: string
+  ): Promise<Adoption> {
+    const { data, error } = await supabase
+      .from("adoptions")
+      .insert({
+        animal_id: animalId,
+        adopter_profile_id: adopterProfileId,
+        status: "IN_PROGRESS",
+      })
+      .select("id, animal_id, adopter_profile_id, status, created_at")
+      .single();
+
+    if (!error && data) {
+      return toAdoption(data as AdoptionRow);
+    }
+
+    if (error?.code !== "23505") {
+      throw error;
+    }
+
+    const { data: existing, error: lookupError } = await supabase
+      .from("adoptions")
+      .select("id, animal_id, adopter_profile_id, status, created_at")
+      .eq("animal_id", animalId)
+      .eq("adopter_profile_id", adopterProfileId)
+      .not("status", "in", "(ADOPTED,CANCELED,REJECTED)")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lookupError) throw lookupError;
+    if (!existing) throw error;
+
+    return toAdoption(existing as AdoptionRow);
   }
 }

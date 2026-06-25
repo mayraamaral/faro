@@ -1,6 +1,7 @@
+import type { UserRole } from "@/features/pets/domain/entities/current-user.entity";
 import type { SignupFormData } from "../../schemas/signup.schema";
 
-export type UserRole = "ADOPTER" | "LISTER";
+export type { UserRole };
 export type ListerType = "INDIVIDUAL" | "SHELTER";
 
 export class UserRegistrationEntity {
