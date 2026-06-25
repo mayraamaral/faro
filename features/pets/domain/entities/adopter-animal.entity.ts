@@ -9,4 +9,9 @@ export type AdopterAnimal = {
   state: string;
   distanceKm: number;
   photoUrl: string | null;
+  healthNotes: string | null;
+  behaviorNotes: string | null;
+  interestingFacts: string | null;
+  isVaccinated: boolean | null;
+  isNeutered: boolean | null;
 };

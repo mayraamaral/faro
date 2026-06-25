@@ -6,6 +6,41 @@ import type { UserRole } from "../domain/entities/current-user.entity";
 import type { ListerAnimal } from "../domain/entities/lister-animal.entity";
 import type { AdopterAnimal } from "../domain/entities/adopter-animal.entity";
 
+type AnimalPhotoRow = {
+  photo_url: string | null;
+};
+
+type ListerAnimalRow = {
+  id: string;
+  name: string;
+  species: string;
+  sex: string;
+  size: string;
+  birth_date: string;
+  city: string;
+  state: string;
+  adoption_status: string;
+  animal_photos: AnimalPhotoRow[] | null;
+};
+
+type NearbyAnimalRow = {
+  id: string;
+  name: string;
+  species: string;
+  sex: string;
+  size: string;
+  birth_date: string;
+  city: string;
+  state: string;
+  distance_km: number;
+  photo_url: string | null;
+  health_notes?: string | null;
+  behavior_notes?: string | null;
+  interesting_facts?: string | null;
+  is_vaccinated?: boolean | null;
+  is_neutered?: boolean | null;
+};
+
 export class SupabaseAnimalRepository implements AnimalRepository {
   async getListerContextByUserId(userId: string): Promise<{
     role: UserRole | null;
@@ -104,7 +139,9 @@ export class SupabaseAnimalRepository implements AnimalRepository {
 
     if (error) throw error;
 
-    const animals = await Promise.all((data || []).map(async (row: any) => {
+    const rows = (data ?? []) as ListerAnimalRow[];
+
+    const animals = await Promise.all(rows.map(async (row) => {
       // Sort photos by display_order if it was fetched, but here we just take the first one
       const photos = row.animal_photos || [];
       const photoPath = photos.length > 0 ? photos[0].photo_url : null;
@@ -159,7 +196,7 @@ export class SupabaseAnimalRepository implements AnimalRepository {
     if (error) throw error;
 
     const animals = await Promise.all(
-      (data || []).map(async (row: any) => {
+      ((data ?? []) as NearbyAnimalRow[]).map(async (row) => {
         let photoUrl = null;
 
         if (row.photo_url) {
@@ -185,6 +222,11 @@ export class SupabaseAnimalRepository implements AnimalRepository {
           state: row.state,
           distanceKm: row.distance_km,
           photoUrl,
+          healthNotes: row.health_notes ?? null,
+          behaviorNotes: row.behavior_notes ?? null,
+          interestingFacts: row.interesting_facts ?? null,
+          isVaccinated: row.is_vaccinated ?? null,
+          isNeutered: row.is_neutered ?? null,
         };
       })
     );
