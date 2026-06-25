@@ -10,12 +10,16 @@ type ChatHeaderProps = {
   counterpartyName: string;
   canEditStatus?: boolean;
   onEditStatus?: () => void;
+  canViewStatus?: boolean;
+  onOpenStatus?: () => void;
 };
 
 export function ChatHeader({
   counterpartyName,
   canEditStatus = false,
   onEditStatus,
+  canViewStatus = false,
+  onOpenStatus,
 }: ChatHeaderProps) {
   const router = useRouter();
 
@@ -43,6 +47,21 @@ export function ChatHeader({
       <Text style={styles.title} numberOfLines={1}>
         {counterpartyName}
       </Text>
+      {canViewStatus && onOpenStatus ? (
+        <Pressable
+          onPress={onOpenStatus}
+          style={styles.statusButton}
+          accessibilityRole="button"
+          accessibilityLabel="Ver status da adoção"
+          hitSlop={8}
+        >
+          <MaterialCommunityIcons
+            name="clipboard-check-multiple-outline"
+            size={28}
+            color={tokens.colors.brand.primary}
+          />
+        </Pressable>
+      ) : null}
       {canEditStatus && onEditStatus ? (
         <Pressable
           onPress={onEditStatus}
@@ -91,6 +110,9 @@ const styles = StyleSheet.create({
     color: tokens.colors.brand.primary,
   },
   editButton: {
+    padding: tokens.spacing[1],
+  },
+  statusButton: {
     padding: tokens.spacing[1],
   },
 });

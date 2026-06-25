@@ -13,7 +13,7 @@ export const AdoptionProcessStatusEnum = z.enum([
 
 export type AdoptionProcessStatus = z.infer<typeof AdoptionProcessStatusEnum>;
 
-const isoDatetime = z.iso.datetime();
+const isoDatetime = z.string().datetime({ offset: true });
 const uuid = z.uuid();
 
 const baseAdoption = z.object({

@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -36,6 +36,7 @@ type ChatScreenProps = {
 };
 
 export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenProps = {}) {
+  const router = useRouter();
   const params = useLocalSearchParams<{ conversation_id?: string }>();
   const conversationId = conversationIdProp ?? params.conversation_id ?? "";
   const identity = useChatIdentity();
@@ -97,6 +98,11 @@ export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenPro
   const handleOpenStatusEditor = useCallback(() => {
     setIsStatusEditorVisible(true);
   }, []);
+
+  const handleOpenAdoptionStatus = useCallback(() => {
+    if (!adoptionId) return;
+    router.push(`/adoption-status/${adoptionId}` as never);
+  }, [adoptionId, router]);
 
   const handleCloseStatusEditor = useCallback(() => {
     if (isUpdatingStatus) return;
@@ -164,6 +170,7 @@ export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenPro
   }
 
   const canEditStatus = identity.status === "ready" && identity.viewer.isLister;
+  const canViewStatus = identity.status === "ready" && !identity.viewer.isLister;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -171,6 +178,8 @@ export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenPro
         counterpartyName={counterpartyName ?? headerError ?? "Conversa"}
         canEditStatus={canEditStatus && adoptionId !== null}
         onEditStatus={handleOpenStatusEditor}
+        canViewStatus={canViewStatus && adoptionId !== null}
+        onOpenStatus={handleOpenAdoptionStatus}
       />
       <View style={styles.flex}>
         <View style={styles.messagesContainer}>
