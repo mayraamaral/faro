@@ -1,10 +1,11 @@
+import type { MessageSenderType } from "../domain/entities/message.entity";
 import { MessageEntity } from "../domain/entities/message.entity";
 import type { ChatRepository } from "../domain/repositories/chat.repository";
 import type { SendMessageFormData } from "../schemas/send-message.schema";
 
 export type SendMessageParams = SendMessageFormData & {
   conversationId: string;
-  senderType: "ADOPTER" | "LISTER";
+  senderType: MessageSenderType;
   userId: string;
   adopterProfileId: string | null;
   listerProfileId: string | null;

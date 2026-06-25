@@ -1,7 +1,9 @@
 export const MESSAGE_MAX_LENGTH = 2000;
 export const MESSAGE_MIN_LENGTH = 1;
 
-export type MessageSenderType = "ADOPTER" | "LISTER";
+import type { UserRole } from "@/features/pets/domain/entities/current-user.entity";
+
+export type MessageSenderType = UserRole;
 
 export type NewMessage = {
   conversationId: string;

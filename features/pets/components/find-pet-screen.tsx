@@ -17,7 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Fonts } from "@/constants/theme";
 import { tokens } from "@/constants/tokens";
 import { useAuth } from "@/features/auth/context/auth.context";
+import { useChatIdentity } from "@/features/chat/hooks/use-chat-identity";
 import { useFindPets } from "../hooks/use-find-pets";
+import { useStartAdoption } from "../hooks/use-start-adoption";
 import { formatPetAgeLabel } from "../utils/format-pet-age-label";
 
 const ANIMAL_CARD_SCREEN_RATIO = 0.9;
@@ -33,6 +35,11 @@ export function FindPetScreen() {
 
   const { isLoading, error, currentAnimal, handleAccept, handleReject, retry } =
     useFindPets();
+
+  const identity = useChatIdentity();
+  const startAdoption = useStartAdoption(identity);
+  const [startError, setStartError] = useState<string | null>(null);
+  const isStartingRef = useRef(false);
 
   const cardRef = useRef<SwipeableCardRef>(null);
   const [isPhotoLoading, setIsPhotoLoading] = useState(false);
@@ -51,6 +58,24 @@ export function FindPetScreen() {
   }, [currentAnimal]);
 
   const actionsDisabled = isLoading || !currentAnimal;
+
+  const handleStartAdoption = useCallback(async () => {
+    if (!currentAnimal) return;
+    if (isStartingRef.current) return;
+    isStartingRef.current = true;
+    setStartError(null);
+    try {
+      const conversationId = await startAdoption.start(currentAnimal.id);
+      if (conversationId) {
+        handleAcceptRef.current();
+        router.push(`/chat/${conversationId}` as never);
+      } else if (startAdoption.error) {
+        setStartError(startAdoption.error);
+      }
+    } finally {
+      isStartingRef.current = false;
+    }
+  }, [currentAnimal, startAdoption, router]);
 
   const openCurrentAnimalProfile = useCallback(() => {
     if (!currentAnimal) return;
@@ -182,26 +207,31 @@ export function FindPetScreen() {
 
       {/* Footer Actions */}
       <View style={styles.footer}>
-        <Button
-          variant="icon"
-          iconName="close"
-          size="lg"
-          shape="rounded"
-          containerStyle={[styles.actionButton, styles.rejectButton]}
-          iconColor={tokens.colors.white}
-          onPress={() => cardRef.current?.swipeLeft()}
-          disabled={actionsDisabled}
-        />
-        <Button
-          variant="icon"
-          iconName="heart"
-          size="lg"
-          shape="rounded"
-          containerStyle={[styles.actionButton, styles.acceptButton]}
-          iconColor={tokens.colors.white}
-          onPress={() => cardRef.current?.swipeRight()}
-          disabled={actionsDisabled}
-        />
+        {startError ? <Text style={styles.startError}>{startError}</Text> : null}
+        <View style={styles.footerButtons}>
+          <Button
+            variant="icon"
+            iconName="close"
+            size="lg"
+            shape="rounded"
+            containerStyle={[styles.actionButton, styles.rejectButton]}
+            iconColor={tokens.colors.white}
+            onPress={() => cardRef.current?.swipeLeft()}
+            disabled={actionsDisabled}
+          />
+          <Button
+            variant="icon"
+            iconName="heart"
+            size="lg"
+            shape="rounded"
+            containerStyle={[styles.actionButton, styles.acceptButton]}
+            iconColor={tokens.colors.white}
+            onPress={() => {
+              void handleStartAdoption();
+            }}
+            disabled={actionsDisabled || startAdoption.isStarting}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -312,12 +342,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-evenly",
     paddingVertical: tokens.spacing[12],
     paddingHorizontal: tokens.spacing[6],
     backgroundColor: tokens.colors.brand.background,
+    gap: tokens.spacing[2],
+  },
+  footerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-evenly",
+  },
+  startError: {
+    fontFamily: Fonts.medium,
+    fontSize: tokens.fontSize.sm,
+    color: tokens.colors.red[500],
+    textAlign: "center",
   },
   actionButton: {
     width: 80,
