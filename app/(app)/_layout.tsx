@@ -12,7 +12,7 @@ export default function AppLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="find-pet" />
+      <Stack.Screen name="(tabs)" />
       <Stack.Screen name="pet-profile" />
       <Stack.Screen name="lister-home" />
       <Stack.Screen name="add-animal" />
