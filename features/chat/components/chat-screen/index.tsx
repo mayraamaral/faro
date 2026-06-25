@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -12,14 +12,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CenteredToast } from "@/components/ui/centered-toast";
 import { Fonts } from "@/constants/theme";
 import { tokens } from "@/constants/tokens";
+import { useUpdateAdoptionStatus } from "@/features/pets/hooks/use-update-adoption-status";
 import { SupabaseChatRepository } from "../../infrastructure/supabase-chat.repository";
 import { GetConversationHeaderUseCase } from "../../use-cases/get-conversation-header.use-case";
 import { useChatIdentity } from "../../hooks/use-chat-identity";
 import { useMessages } from "../../hooks/use-messages";
 import { useSendMessage } from "../../hooks/use-send-message";
 import type { Message } from "../../domain/entities/message.entity";
+import type { AdoptionStatus } from "@/features/pets/domain/entities/adoption.entity";
+import { AdoptionStatusEditor } from "./adoption-status-editor";
 import { ChatHeader } from "./chat-header";
 import { ChatInputBar } from "./chat-input-bar";
 import { ChatMessageBubble } from "./chat-message-bubble";
@@ -35,9 +39,15 @@ export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenPro
   const params = useLocalSearchParams<{ conversation_id?: string }>();
   const conversationId = conversationIdProp ?? params.conversation_id ?? "";
   const identity = useChatIdentity();
+  const { handleUpdateStatus, isLoading: isUpdatingStatus } =
+    useUpdateAdoptionStatus();
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [counterpartyName, setCounterpartyName] = useState<string | null>(null);
   const [headerError, setHeaderError] = useState<string | null>(null);
+  const [adoptionId, setAdoptionId] = useState<string | null>(null);
+  const [adoptionStatus, setAdoptionStatus] = useState<string | null>(null);
+  const [isStatusEditorVisible, setIsStatusEditorVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
 
   useEffect(() => {
@@ -64,11 +74,15 @@ export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenPro
     let cancelled = false;
     setCounterpartyName(null);
     setHeaderError(null);
+    setAdoptionId(null);
+    setAdoptionStatus(null);
     getConversationHeaderUseCase
       .execute(conversationId, identity.viewer)
       .then((result) => {
         if (cancelled) return;
         setCounterpartyName(result.counterpartyName);
+        setAdoptionId(result.adoptionId);
+        setAdoptionStatus(result.adoptionStatus);
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -79,6 +93,36 @@ export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenPro
       cancelled = true;
     };
   }, [conversationId, identity]);
+
+  const handleOpenStatusEditor = useCallback(() => {
+    setIsStatusEditorVisible(true);
+  }, []);
+
+  const handleCloseStatusEditor = useCallback(() => {
+    if (isUpdatingStatus) return;
+    setIsStatusEditorVisible(false);
+  }, [isUpdatingStatus]);
+
+  const handleSaveStatus = useCallback(
+    async (
+      status: AdoptionStatus,
+      payload: { cancelReason: string | null; visitDate: string | null },
+    ) => {
+      if (!adoptionId) return;
+      const updated = await handleUpdateStatus({
+        adoptionId,
+        status,
+        cancelReason: payload.cancelReason ?? undefined,
+        visitDate: payload.visitDate,
+      });
+      if (updated) {
+        setAdoptionStatus(updated.status);
+        setIsStatusEditorVisible(false);
+        setToastMessage("Status atualizado");
+      }
+    },
+    [adoptionId, handleUpdateStatus],
+  );
 
   const conversationState = useMessages(conversationId);
 
@@ -119,9 +163,15 @@ export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenPro
     );
   }
 
+  const canEditStatus = identity.status === "ready" && identity.viewer.isLister;
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <ChatHeader counterpartyName={counterpartyName ?? headerError ?? "Conversa"} />
+      <ChatHeader
+        counterpartyName={counterpartyName ?? headerError ?? "Conversa"}
+        canEditStatus={canEditStatus && adoptionId !== null}
+        onEditStatus={handleOpenStatusEditor}
+      />
       <View style={styles.flex}>
         <View style={styles.messagesContainer}>
           {isIdentityLoading ? (
@@ -186,6 +236,18 @@ export function ChatScreen({ conversationId: conversationIdProp }: ChatScreenPro
           />
         </View>
       </View>
+      <AdoptionStatusEditor
+        visible={isStatusEditorVisible}
+        currentStatus={adoptionStatus}
+        isSubmitting={isUpdatingStatus}
+        onClose={handleCloseStatusEditor}
+        onShowToast={setToastMessage}
+        onSave={handleSaveStatus}
+      />
+      <CenteredToast
+        message={toastMessage}
+        onHide={() => setToastMessage(null)}
+      />
     </SafeAreaView>
   );
 }

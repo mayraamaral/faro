@@ -17,5 +17,9 @@ export interface ChatRepository {
   getConversationHeader(
     conversationId: string,
     viewer: CurrentUserEntity
-  ): Promise<{ counterpartyName: string }>;
+  ): Promise<{
+    counterpartyName: string;
+    adoptionId: string;
+    adoptionStatus: string;
+  }>;
 }

@@ -1,4 +1,4 @@
-import type { Adoption } from "../entities/adoption.entity";
+import type { Adoption, AdoptionStatus } from "../entities/adoption.entity";
 import type { AnimalRegistrationEntity } from "../entities/animal-registration.entity";
 import type { UserRole } from "../entities/current-user.entity";
 import type { ListerAnimal } from "../entities/lister-animal.entity";
@@ -71,5 +71,16 @@ export interface AnimalRepository {
   getOrCreateActiveAdoption(
     animalId: string,
     adopterProfileId: string
+  ): Promise<Adoption>;
+  getAdoptionByIdForLister(
+    listerProfileId: string,
+    adoptionId: string,
+  ): Promise<Adoption | null>;
+  updateAdoptionStatusForLister(
+    listerProfileId: string,
+    adoptionId: string,
+    status: AdoptionStatus,
+    cancelReason: string | null,
+    visitDate: string | null,
   ): Promise<Adoption>;
 }

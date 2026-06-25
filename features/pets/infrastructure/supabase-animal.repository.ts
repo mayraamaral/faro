@@ -1,9 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { extractStoragePath } from "../utils/extract-storage-path";
 import { mapSupabasePetSearchError } from "./supabase-pet-search-error-mapper";
+import { mapSupabaseUpdateAdoptionStatusError } from "./supabase-adoption-status-error-mapper";
 import type { AnimalRepository } from "../domain/repositories/animal.repository";
 import type { AnimalDetail, ExistingAnimalPhoto } from "../domain/repositories/animal.repository";
-import type { Adoption } from "../domain/entities/adoption.entity";
+import type { Adoption, AdoptionStatus } from "../domain/entities/adoption.entity";
 import type { AnimalRegistrationEntity } from "../domain/entities/animal-registration.entity";
 import type { UserRole } from "../domain/entities/current-user.entity";
 import { toListerAnimal, type ListerAnimal } from "../domain/entities/lister-animal.entity";
@@ -501,5 +502,88 @@ export class SupabaseAnimalRepository implements AnimalRepository {
     if (!existing) throw error;
 
     return toAdoption(existing as AdoptionRow);
+  }
+
+  async getAdoptionByIdForLister(
+    listerProfileId: string,
+    adoptionId: string,
+  ): Promise<Adoption | null> {
+    const { data, error } = await supabase
+      .from("adoptions")
+      .select(
+        `
+        id,
+        animal_id,
+        adopter_profile_id,
+        status,
+        created_at,
+        animals:animal_id (
+          lister_profile_id
+        )
+      `,
+      )
+      .eq("id", adoptionId)
+      .maybeSingle();
+
+    if (error) throw mapSupabaseUpdateAdoptionStatusError(error);
+    if (!data) return null;
+
+    type AdoptionWithAnimal = AdoptionRow & {
+      animals: { lister_profile_id: string } | null;
+    };
+
+    const row = data as unknown as AdoptionWithAnimal;
+    if (row.animals?.lister_profile_id !== listerProfileId) {
+      return null;
+    }
+
+    return toAdoption(row);
+  }
+
+  async updateAdoptionStatusForLister(
+    listerProfileId: string,
+    adoptionId: string,
+    status: AdoptionStatus,
+    cancelReason: string | null,
+    visitDate: string | null,
+  ): Promise<Adoption> {
+    const existing = await this.getAdoptionByIdForLister(
+      listerProfileId,
+      adoptionId,
+    );
+    if (!existing) {
+      throw mapSupabaseUpdateAdoptionStatusError({ code: "PGRST116" });
+    }
+
+    const updatePayload: {
+      status: AdoptionStatus;
+      cancel_reason?: string;
+      visit_scheduled_for?: string;
+      visited_at?: string;
+    } = { status };
+    if (cancelReason !== null) {
+      updatePayload.cancel_reason = cancelReason;
+    }
+    if (visitDate !== null) {
+      if (status === "VISIT_PENDING") {
+        updatePayload.visit_scheduled_for = visitDate;
+      } else if (status === "VISITED") {
+        updatePayload.visited_at = visitDate;
+      }
+    }
+
+    const { data, error } = await supabase
+      .from("adoptions")
+      .update(updatePayload)
+      .eq("id", adoptionId)
+      .select("id, animal_id, adopter_profile_id, status, created_at")
+      .single();
+
+    if (error) throw mapSupabaseUpdateAdoptionStatusError(error);
+    if (!data) {
+      throw mapSupabaseUpdateAdoptionStatusError({ message: "No row returned" });
+    }
+
+    return toAdoption(data as AdoptionRow);
   }
 }
