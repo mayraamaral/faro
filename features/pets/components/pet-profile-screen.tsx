@@ -178,7 +178,8 @@ export function PetProfileScreen({ animal }: PetProfileScreenProps) {
             label="QUERO CONHECER"
             onPress={showInterestConfirmation}
             variant="primary"
-            size="lg"
+            size="md"
+            fullWidth={false}
             uppercase={false}
             containerStyle={styles.interestButton}
             labelStyle={styles.primaryButtonLabel}
@@ -188,7 +189,8 @@ export function PetProfileScreen({ animal }: PetProfileScreenProps) {
             label="VOLTAR"
             onPress={() => router.back()}
             variant="primary"
-            size="lg"
+            size="md"
+            fullWidth={false}
             uppercase={false}
             containerStyle={styles.backButton}
             labelStyle={styles.secondaryButtonLabel}

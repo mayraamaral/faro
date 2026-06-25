@@ -56,7 +56,7 @@ export function FindPetScreen() {
     if (!currentAnimal) return;
 
     router.push({
-      pathname: "./pet-profile",
+      pathname: "/pet-profile",
       params: {
         id: currentAnimal.id,
         name: currentAnimal.name,

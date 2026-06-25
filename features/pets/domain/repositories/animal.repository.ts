@@ -2,6 +2,10 @@ import type { AnimalRegistrationEntity } from "../entities/animal-registration.e
 import type { UserRole } from "../entities/current-user.entity";
 import type { ListerAnimal } from "../entities/lister-animal.entity";
 import type { AdopterAnimal } from "../entities/adopter-animal.entity";
+import type {
+  AnimalSearchFilters,
+  AnimalSearchOptions,
+} from "../entities/animal-search-filter";
 
 export type ListerContext = {
   role: UserRole | null;
@@ -12,7 +16,13 @@ export interface AnimalRepository {
   getListerContextByUserId(userId: string): Promise<ListerContext>;
   hasAnimalsForLister(listerProfileId: string): Promise<boolean>;
   getAnimalsForLister(listerProfileId: string): Promise<ListerAnimal[]>;
-  getNearbyAnimals(lat: number, lng: number, radiusKm: number): Promise<AdopterAnimal[]>;
+  getNearbyAnimals(
+    lat: number,
+    lng: number,
+    radiusKm: number,
+    filters?: AnimalSearchFilters
+  ): Promise<AdopterAnimal[]>;
+  getSearchOptions(): Promise<AnimalSearchOptions>;
   createForLister(
     listerProfileId: string,
     entity: AnimalRegistrationEntity
