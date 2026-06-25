@@ -76,6 +76,9 @@ export function FindPetScreen() {
     }
   }, [currentAnimal, startAdoption, router]);
 
+  const handleStartAdoptionRef = useRef(handleStartAdoption);
+  handleStartAdoptionRef.current = handleStartAdoption;
+
   const openCurrentAnimalProfile = useCallback(() => {
     if (!currentAnimal) return;
 
@@ -140,7 +143,9 @@ export function FindPetScreen() {
               key={currentAnimal.id}
               ref={cardRef}
               onSwipeLeft={() => handleRejectRef.current()}
-              onSwipeRight={() => handleAcceptRef.current()}
+              onSwipeRight={() => {
+                void handleStartAdoptionRef.current();
+              }}
             >
               <Pressable
                 accessibilityRole="button"
