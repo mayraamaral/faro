@@ -60,5 +60,5 @@ export default function AppIndexRoute() {
     return <SplashLoader />;
   }
 
-  return <Redirect href={role === "LISTER" ? "/lister-home" : "/find-pet"} />;
+  return <Redirect href={role === "LISTER" ? "/lister-home" : "/feed"} />;
 }

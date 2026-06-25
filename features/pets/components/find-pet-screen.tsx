@@ -80,7 +80,7 @@ export function FindPetScreen() {
   }, [currentAnimal, router]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",
     paddingVertical: tokens.spacing[12],
     paddingHorizontal: tokens.spacing[6],
-    backgroundColor: tokens.colors.white,
+    backgroundColor: tokens.colors.brand.background,
   },
   actionButton: {
     width: 80,
