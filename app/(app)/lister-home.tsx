@@ -1,5 +1,5 @@
-import { ListerHomeScreen } from "@/features/pets/components/lister-home-screen";
+import { Redirect } from "expo-router";
 
 export default function ListerHomeRoute() {
-  return <ListerHomeScreen />;
+  return <Redirect href="/my-pets" />;
 }

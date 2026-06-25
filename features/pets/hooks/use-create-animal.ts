@@ -20,22 +20,24 @@ export function useCreateAnimal() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const handleCreateAnimal = async (data: CreateAnimalFormData) => {
+  const handleCreateAnimal = async (data: CreateAnimalFormData): Promise<boolean> => {
     if (!user) {
       Alert.alert("Sessão inválida", "Faça login novamente para cadastrar um pet.");
-      return;
+      return false;
     }
 
     try {
       setIsLoading(true);
       await createAnimalUseCase.execute(data, user.id);
       Alert.alert("Pet cadastrado", "Seu pet foi cadastrado com sucesso.");
-      router.replace("/lister-home" as any);
+      router.replace("/my-pets" as any);
+      return true;
     } catch (error: any) {
       Alert.alert(
         "Erro ao cadastrar pet",
         error?.message || "Não foi possível cadastrar o pet."
       );
+      return false;
     } finally {
       setIsLoading(false);
     }
