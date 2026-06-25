@@ -1,33 +1,5 @@
-import { StyleSheet, View } from "react-native";
-
-import { ThemedText } from "@/components/themed-text";
-import { tokens, appFonts } from "@/constants/tokens";
+import { SearchPetsScreen } from "@/features/pets/components/search-pets-screen";
 
 export default function BuscaRoute() {
-  return (
-    <View style={styles.container}>
-      <ThemedText style={styles.title}>Busca</ThemedText>
-      <ThemedText style={styles.subtitle}>Em breve</ThemedText>
-    </View>
-  );
+  return <SearchPetsScreen />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: tokens.colors.brand.background,
-    gap: tokens.spacing[2],
-  },
-  title: {
-    fontFamily: appFonts.primaryBold,
-    fontSize: tokens.fontSize["2xl"],
-    color: tokens.colors.brand.primary,
-  },
-  subtitle: {
-    fontFamily: appFonts.primary,
-    fontSize: tokens.fontSize.base,
-    color: tokens.colors.gray[500],
-  },
-});

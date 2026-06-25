@@ -1,10 +1,22 @@
 import { supabase } from "@/lib/supabase";
 import { extractStoragePath } from "../utils/extract-storage-path";
+import { mapSupabasePetSearchError } from "./supabase-pet-search-error-mapper";
 import type { AnimalRepository } from "../domain/repositories/animal.repository";
 import type { AnimalRegistrationEntity } from "../domain/entities/animal-registration.entity";
 import type { UserRole } from "../domain/entities/current-user.entity";
 import type { ListerAnimal } from "../domain/entities/lister-animal.entity";
 import type { AdopterAnimal } from "../domain/entities/adopter-animal.entity";
+import {
+  ANIMAL_AGE_CATEGORY_VALUES,
+  ANIMAL_CATEGORY_VALUES,
+  ANIMAL_SIZE_VALUES,
+  type AnimalAgeCategory,
+  type AnimalCategory,
+  type AnimalSearchFilters,
+  type AnimalSearchOption,
+  type AnimalSearchOptions,
+  type AnimalSize,
+} from "../domain/entities/animal-search-filter";
 
 type AnimalPhotoRow = {
   photo_url: string | null;
@@ -40,6 +52,38 @@ type NearbyAnimalRow = {
   is_vaccinated?: boolean | null;
   is_neutered?: boolean | null;
 };
+
+type SearchOptionGroup = "CATEGORY" | "SIZE" | "AGE";
+
+type SearchOptionRow = {
+  option_group: SearchOptionGroup;
+  value: string;
+  label: string;
+  display_order: number;
+};
+
+const isAnimalCategory = (value: string): value is AnimalCategory =>
+  ANIMAL_CATEGORY_VALUES.includes(value as AnimalCategory);
+
+const isAnimalSize = (value: string): value is AnimalSize =>
+  ANIMAL_SIZE_VALUES.includes(value as AnimalSize);
+
+const isAnimalAgeCategory = (value: string): value is AnimalAgeCategory =>
+  ANIMAL_AGE_CATEGORY_VALUES.includes(value as AnimalAgeCategory);
+
+function toSearchOption<TValue extends string>(
+  row: SearchOptionRow,
+  isValidValue: (value: string) => value is TValue
+): AnimalSearchOption<TValue> {
+  if (!isValidValue(row.value)) {
+    throw new Error(`Opção de busca inválida recebida: ${row.value}`);
+  }
+
+  return {
+    value: row.value,
+    label: row.label,
+  };
+}
 
 export class SupabaseAnimalRepository implements AnimalRepository {
   async getListerContextByUserId(userId: string): Promise<{
@@ -186,14 +230,22 @@ export class SupabaseAnimalRepository implements AnimalRepository {
     return (count ?? 0) > 0;
   }
 
-  async getNearbyAnimals(lat: number, lng: number, radiusKm: number): Promise<AdopterAnimal[]> {
+  async getNearbyAnimals(
+    lat: number,
+    lng: number,
+    radiusKm: number,
+    filters?: AnimalSearchFilters
+  ): Promise<AdopterAnimal[]> {
     const { data, error } = await supabase.rpc("get_nearby_animals", {
       user_lat: lat,
       user_lon: lng,
       radius_km: radiusKm,
+      species_filter: filters?.categories.length ? filters.categories : null,
+      size_filter: filters?.sizes.length ? filters.sizes : null,
+      age_category_filter: filters?.ageCategories.length ? filters.ageCategories : null,
     });
 
-    if (error) throw error;
+    if (error) throw mapSupabasePetSearchError(error);
 
     const animals = await Promise.all(
       ((data ?? []) as NearbyAnimalRow[]).map(async (row) => {
@@ -232,5 +284,27 @@ export class SupabaseAnimalRepository implements AnimalRepository {
     );
 
     return animals;
+  }
+
+  async getSearchOptions(): Promise<AnimalSearchOptions> {
+    const { data, error } = await supabase.rpc("get_animal_search_options");
+
+    if (error) throw mapSupabasePetSearchError(error);
+
+    const rows = ((data ?? []) as SearchOptionRow[]).sort(
+      (current, next) => current.display_order - next.display_order
+    );
+
+    return {
+      categories: rows
+        .filter((row) => row.option_group === "CATEGORY")
+        .map((row) => toSearchOption(row, isAnimalCategory)),
+      sizes: rows
+        .filter((row) => row.option_group === "SIZE")
+        .map((row) => toSearchOption(row, isAnimalSize)),
+      ageCategories: rows
+        .filter((row) => row.option_group === "AGE")
+        .map((row) => toSearchOption(row, isAnimalAgeCategory)),
+    };
   }
 }
