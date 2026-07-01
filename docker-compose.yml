@@ -1,0 +1,62 @@
+# docker-compose.yml — local orchestration for the Faro Expo app.
+#
+# Two services, sharing the same Dockerfile via different `target`s:
+#   * web-dev   — Expo dev server (Metro + Expo devtools) on :8081
+#   * web-prod  — nginx serving the built static web bundle on :8080
+#
+# Usage:
+#   docker compose --profile dev  up --build
+#   docker compose --profile prod up --build
+#   docker compose --profile both up --build
+
+name: faro
+
+services:
+  web-dev:
+    profiles: ["dev", "both"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    image: faro:dev
+    container_name: faro-web-dev
+    environment:
+      # EXPO_PUBLIC_* must be present at build time too; we re-export them
+      # here so the dev server reads the same values the production bundle
+      # was compiled with. Override via .env or your shell.
+      EXPO_PUBLIC_SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:-}
+      EXPO_PUBLIC_SUPABASE_KEY: ${EXPO_PUBLIC_SUPABASE_KEY:-}
+      EXPO_PUBLIC_SUPABASE_ANIMALS_BUCKET: ${EXPO_PUBLIC_SUPABASE_ANIMALS_BUCKET:-animals}
+    ports:
+      - "8081:8081"   # Metro bundler (web)
+      - "19000:19000" # Expo devtools UI
+      - "19001:19001" # Expo devtools (alternate)
+      - "19002:19002" # Expo devtools (logs)
+    volumes:
+      # Live-reload: mount the source on top of the image copy.
+      - ./:/app
+      # Keep the image's installed node_modules so dev deps don't disappear.
+      - /app/node_modules
+      - /app/.expo
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  web-prod:
+    profiles: ["prod", "both"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        # These are inlined into the JS bundle at build time by Metro,
+        # so the nginx container itself needs no env vars at runtime.
+        EXPO_PUBLIC_SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:-}
+        EXPO_PUBLIC_SUPABASE_KEY: ${EXPO_PUBLIC_SUPABASE_KEY:-}
+        EXPO_PUBLIC_SUPABASE_ANIMALS_BUCKET: ${EXPO_PUBLIC_SUPABASE_ANIMALS_BUCKET:-animals}
+    image: faro:web
+    container_name: faro-web-prod
+    ports:
+      - "8080:80"
+    # nginx:alpine is already hardened; no extra healthcheck needed.
+    restart: unless-stopped

@@ -1,0 +1,55 @@
+# See https://docs.docker.com/engine/reference/builder/#dockerignore-file
+
+# dependencies
+node_modules
+.pnpm-store
+.pnpm-debug.log*
+
+# build outputs
+dist
+web-build
+.expo
+.metro-health-check*
+
+# generated native projects (Expo prebuild)
+ios
+android
+.kotlin
+*.orig.*
+
+# secrets (NEVER bake into an image)
+.env
+.env.*
+!.env.example
+
+# vcs / editor noise
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+.DS_Store
+
+# local tooling artefacts
+.playwright-mcp
+.sisyphus
+.opencode
+.changeset
+*.log
+
+# NOTE: .rnstorybook is NOT excluded — app/_layout.tsx has a static
+# `import '../.rnstorybook'` resolved at bundle time, gated only at runtime
+# by EXPO_PUBLIC_STORYBOOK_ENABLED. The directory must be present in the
+# build context for `expo export --platform web` to succeed.
+
+# docs and CI (not needed at build/run time)
+docs
+*.md
+!README.md
+
+# docker / compose meta (avoid recursive COPY)
+Dockerfile
+Dockerfile.*
+docker-compose*.yml
+.dockerignore
