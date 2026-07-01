@@ -17,6 +17,7 @@ type AuthContextValue = {
   session: Session | null;
   user: User | null;
   isBootstrapping: boolean;
+  isRecoveryFlow: boolean;
   logout: () => Promise<void>;
 };
 
@@ -27,6 +28,7 @@ const authRepository = new SupabaseAuthRepository();
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -41,9 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsBootstrapping(false);
     });
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!isMountedRef.current) return;
       setSession(nextSession);
+
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecoveryFlow(true);
+      } else if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        setIsRecoveryFlow(false);
+      }
     });
 
     return () => {
@@ -61,9 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       isBootstrapping,
+      isRecoveryFlow,
       logout,
     }),
-    [session, isBootstrapping, logout]
+    [session, isBootstrapping, isRecoveryFlow, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

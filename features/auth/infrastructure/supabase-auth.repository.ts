@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabase";
 import type { AuthRepository } from "../domain/repositories/auth.repository";
 import type { UserRegistrationEntity } from "../domain/entities/user-registration.entity";
 import type { UserCredentialsEntity } from "../domain/entities/user-credentials.entity";
+import type { PasswordResetRequestEntity } from "../domain/entities/password-reset-request.entity";
+import type { NewPasswordEntity } from "../domain/entities/new-password.entity";
 import { AuthError } from "../domain/errors/auth.errors";
 import { mapSupabaseAuthError } from "./supabase-error-mapper";
 
@@ -45,6 +47,36 @@ export class SupabaseAuthRepository implements AuthRepository {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
+    });
+
+    if (error) throw mapSupabaseAuthError(error);
+  }
+
+  async requestPasswordReset(entity: PasswordResetRequestEntity): Promise<void> {
+    const { error } = await supabase.auth.resetPasswordForEmail(entity.value);
+
+    if (error) throw mapSupabaseAuthError(error);
+  }
+
+  async resendRecoveryCode(email: string): Promise<void> {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+
+    if (error) throw mapSupabaseAuthError(error);
+  }
+
+  async verifyRecoveryCode(email: string, code: string): Promise<void> {
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "recovery",
+    });
+
+    if (error) throw mapSupabaseAuthError(error);
+  }
+
+  async updatePassword(entity: NewPasswordEntity): Promise<void> {
+    const { error } = await supabase.auth.updateUser({
+      password: entity.password,
     });
 
     if (error) throw mapSupabaseAuthError(error);
