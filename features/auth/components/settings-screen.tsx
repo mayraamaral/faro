@@ -30,6 +30,10 @@ export function SettingsScreen() {
     router.push("/user-info" as never);
   };
 
+  const handleOpenSupport = () => {
+    router.push("/support" as never);
+  };
+
   return (
     <View style={styles.root}>
       {user ? (
@@ -54,6 +58,16 @@ export function SettingsScreen() {
             </View>
 
             <View style={styles.actions}>
+              <Button
+                label="Suporte"
+                variant="iconText"
+                iconName="lifebuoy"
+                size="md"
+                onPress={handleOpenSupport}
+                containerStyle={styles.actionButton}
+                labelStyle={styles.actionButtonLabel}
+                iconColor={tokens.colors.brand.primary}
+              />
               <Button
                 label="Sair"
                 variant="iconText"
@@ -112,6 +126,19 @@ const styles = StyleSheet.create({
   },
   actions: {
     alignItems: "flex-start",
+    gap: tokens.spacing[3],
+  },
+  actionButton: {
+    alignSelf: "flex-start",
+    backgroundColor: tokens.colors.white,
+    shadowColor: tokens.colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  actionButtonLabel: {
+    color: tokens.colors.brand.primary,
   },
   logoutButton: {
     alignSelf: "flex-start",
