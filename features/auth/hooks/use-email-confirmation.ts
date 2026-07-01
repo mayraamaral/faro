@@ -19,7 +19,7 @@ export function useEmailConfirmation(email: string) {
     try {
       setIsLoading(true);
       await confirmEmailUseCase.execute(email, data.code.trim());
-      router.replace("/find-pet");
+      router.replace("/");
     } catch (error) {
       if (error instanceof AuthError && error.code === "INVALID_CONFIRMATION_CODE") {
         Alert.alert("Código inválido", "Verifique o código de 6 dígitos e tente novamente.");
