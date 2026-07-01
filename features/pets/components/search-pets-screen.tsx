@@ -72,8 +72,38 @@ function FilterSection<TValue extends string>({
 }
 
 function SearchResultCard({ animal }: { animal: AdopterAnimal }) {
+  const router = useRouter();
+
+  const openProfile = () => {
+    router.push({
+      pathname: "/pet-profile",
+      params: {
+        id: animal.id,
+        name: animal.name,
+        species: animal.species,
+        sex: animal.sex,
+        size: animal.size,
+        birthDate: animal.birthDate,
+        city: animal.city,
+        state: animal.state,
+        distanceKm: String(animal.distanceKm),
+        photoUrl: animal.photoUrl ?? "",
+        healthNotes: animal.healthNotes ?? "",
+        behaviorNotes: animal.behaviorNotes ?? "",
+        interestingFacts: animal.interestingFacts ?? "",
+        isVaccinated: animal.isVaccinated === null ? "" : String(animal.isVaccinated),
+        isNeutered: animal.isNeutered === null ? "" : String(animal.isNeutered),
+      },
+    });
+  };
+
   return (
-    <View style={styles.resultCard}>
+    <Pressable
+      style={styles.resultCard}
+      onPress={openProfile}
+      accessibilityRole="button"
+      accessibilityLabel={`Abrir perfil de ${animal.name}`}
+    >
       {animal.photoUrl ? (
         <Image source={{ uri: animal.photoUrl }} style={styles.resultImage} resizeMode="cover" />
       ) : (
@@ -94,7 +124,7 @@ function SearchResultCard({ animal }: { animal: AdopterAnimal }) {
           {animal.city}, {animal.state}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
