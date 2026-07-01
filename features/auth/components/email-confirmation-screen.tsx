@@ -67,7 +67,11 @@ export function EmailConfirmationScreen() {
                   name="code"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
-                      style={[styles.input, errors.code && styles.inputError]}
+                      style={[
+                        styles.input,
+                        styles.codeInput,
+                        errors.code && styles.inputError,
+                      ]}
                       placeholder="000000"
                       placeholderTextColor={tokens.colors.gray[500]}
                       onBlur={onBlur}
@@ -179,6 +183,8 @@ const styles = StyleSheet.create({
     fontSize: tokens.fontSize.base,
     color: tokens.colors.gray[900],
     backgroundColor: tokens.colors.white,
+  },
+  codeInput: {
     letterSpacing: 6,
   },
   inputError: {

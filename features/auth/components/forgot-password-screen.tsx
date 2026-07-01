@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import {
   KeyboardAvoidingView,
@@ -17,21 +16,22 @@ import { Button } from "@/components/ui/button";
 import { LogoWordmark } from "@/components/ui/logo-wordmark";
 import { Fonts } from "@/constants/theme";
 import { tokens } from "@/constants/tokens";
-import { useLogin } from "../hooks/use-login";
-import { loginSchema, type LoginFormData } from "../schemas/login.schema";
+import { usePasswordReset } from "../hooks/use-password-reset";
+import {
+  passwordResetSchema,
+  type PasswordResetRequestFormData,
+} from "../schemas/password-reset.schema";
 
-export function LoginScreen() {
-  const router = useRouter();
-  const { handleLogin, isLoading } = useLogin();
+export function ForgotPasswordScreen() {
+  const { handleRequestReset, goBackToLogin, isLoading } = usePasswordReset();
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<PasswordResetRequestFormData>({
+    resolver: zodResolver(passwordResetSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
@@ -48,6 +48,13 @@ export function LoginScreen() {
             </View>
 
             <View style={styles.formContainer}>
+              <View style={styles.textContainer}>
+                <Text style={styles.title}>Recuperar senha</Text>
+                <Text style={styles.description}>
+                  Informe o e-mail cadastrado e enviaremos um código de 6 dígitos para você continuar redefinindo a sua senha.
+                </Text>
+              </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>E-mail</Text>
                 <Controller
@@ -71,57 +78,21 @@ export function LoginScreen() {
                 )}
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Senha</Text>
-                <Controller
-                  control={control}
-                  name="password"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={[
-                        styles.input,
-                        errors.password && styles.inputError,
-                      ]}
-                      placeholder="Digite sua senha"
-                      placeholderTextColor={tokens.colors.gray[500]}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      secureTextEntry
-                    />
-                  )}
-                />
-                {errors.password && (
-                  <Text style={styles.errorText}>
-                    {errors.password.message}
-                  </Text>
-                )}
-              </View>
-
               <Button
-                label={isLoading ? "ENTRANDO..." : "ACESSAR"}
+                label={isLoading ? "ENVIANDO..." : "ENVIAR INSTRUÇÕES"}
                 variant="primary"
                 size="md"
-                onPress={handleSubmit(handleLogin)}
+                onPress={handleSubmit(handleRequestReset)}
                 disabled={isLoading}
                 containerStyle={styles.buttonContainer}
               />
 
               <Pressable
-                onPress={() => router.push("/forgot-password" as any)}
+                onPress={goBackToLogin}
                 style={styles.linkContainer}
                 disabled={isLoading}
               >
-                <Text style={styles.linkText}>Esqueci minha senha</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => router.push("/signup" as any)}
-                style={styles.linkContainer}
-              >
-                <Text style={styles.linkText}>
-                  Não tem uma conta? Cadastre-se
-                </Text>
+                <Text style={styles.linkText}>Voltar para o login</Text>
               </Pressable>
             </View>
           </View>
@@ -162,6 +133,22 @@ const styles = StyleSheet.create({
   formContainer: {
     gap: tokens.spacing[4],
   },
+  textContainer: {
+    gap: tokens.spacing[2],
+  },
+  title: {
+    fontFamily: Fonts.bold,
+    fontSize: tokens.fontSize.xl,
+    color: tokens.colors.gray[900],
+    textAlign: "center",
+  },
+  description: {
+    fontFamily: Fonts.primary,
+    fontSize: tokens.fontSize.sm,
+    color: tokens.colors.gray[700],
+    textAlign: "center",
+    lineHeight: tokens.lineHeight.sm,
+  },
   inputGroup: {
     gap: tokens.spacing[2],
   },
@@ -190,7 +177,7 @@ const styles = StyleSheet.create({
     color: tokens.colors.red[500],
   },
   buttonContainer: {
-    marginTop: tokens.spacing[4],
+    marginTop: tokens.spacing[2],
   },
   linkContainer: {
     alignItems: "center",

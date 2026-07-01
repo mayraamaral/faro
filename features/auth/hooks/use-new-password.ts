@@ -4,52 +4,49 @@ import { useRouter } from "expo-router";
 
 import { AuthError, type AuthErrorCode } from "../domain/errors/auth.errors";
 import { SupabaseAuthRepository } from "../infrastructure/supabase-auth.repository";
-import type { LoginFormData } from "../schemas/login.schema";
-import { LoginUseCase } from "../use-cases/login.use-case";
+import type { NewPasswordFormData } from "../schemas/new-password.schema";
+import { UpdatePasswordUseCase } from "../use-cases/update-password.use-case";
 
 const authRepository = new SupabaseAuthRepository();
-const loginUseCase = new LoginUseCase(authRepository);
+const updatePasswordUseCase = new UpdatePasswordUseCase(authRepository);
 
 const UI_MESSAGES: Record<AuthErrorCode, string> = {
-  INVALID_CREDENTIALS: "E-mail ou senha inválidos.",
+  INVALID_CREDENTIALS: "Sessão expirada. Inicie a recuperação de senha novamente.",
   INVALID_CONFIRMATION_CODE: "Código de confirmação inválido.",
-  EMAIL_NOT_CONFIRMED: "Confirme seu e-mail antes de entrar.",
+  EMAIL_NOT_CONFIRMED: "Confirme seu e-mail antes de continuar.",
   PASSWORD_RESET_FAILED:
-    "Não foi possível enviar as instruções. Verifique o e-mail e tente novamente.",
+    "Não foi possível atualizar a senha. Tente novamente em alguns instantes.",
   SAME_PASSWORD: "A nova senha deve ser diferente da senha atual.",
   WEAK_PASSWORD: "A senha é muito fraca. Use pelo menos 6 caracteres.",
   RATE_LIMITED: "Muitas tentativas. Tente novamente em alguns minutos.",
   NETWORK: "Sem conexão. Verifique sua internet.",
-  UNKNOWN: "Não foi possível entrar. Tente novamente.",
+  UNKNOWN: "Não foi possível atualizar a senha. Tente novamente.",
 };
 
-export function useLogin() {
+export function useNewPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (data: LoginFormData) => {
+  const handleUpdatePassword = async (data: NewPasswordFormData) => {
     try {
       setIsLoading(true);
-      await loginUseCase.execute(data);
+      await updatePasswordUseCase.execute(data);
+      await authRepository.logout();
+      Alert.alert(
+        "Senha atualizada",
+        "Sua senha foi redefinida com sucesso. Faça login novamente."
+      );
+      router.replace("/login");
     } catch (error) {
       const code = error instanceof AuthError ? error.code : "UNKNOWN";
-
-      if (code === "EMAIL_NOT_CONFIRMED") {
-        router.push({
-          pathname: "/confirm-email",
-          params: { email: data.email.trim().toLowerCase() },
-        } as any);
-        return;
-      }
-
-      Alert.alert("Erro ao entrar", UI_MESSAGES[code]);
+      Alert.alert("Erro ao atualizar senha", UI_MESSAGES[code]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return {
-    handleLogin,
+    handleUpdatePassword,
     isLoading,
   };
 }

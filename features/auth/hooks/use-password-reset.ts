@@ -4,11 +4,11 @@ import { useRouter } from "expo-router";
 
 import { AuthError, type AuthErrorCode } from "../domain/errors/auth.errors";
 import { SupabaseAuthRepository } from "../infrastructure/supabase-auth.repository";
-import type { LoginFormData } from "../schemas/login.schema";
-import { LoginUseCase } from "../use-cases/login.use-case";
+import type { PasswordResetRequestFormData } from "../schemas/password-reset.schema";
+import { RequestPasswordResetUseCase } from "../use-cases/request-password-reset.use-case";
 
 const authRepository = new SupabaseAuthRepository();
-const loginUseCase = new LoginUseCase(authRepository);
+const requestPasswordResetUseCase = new RequestPasswordResetUseCase(authRepository);
 
 const UI_MESSAGES: Record<AuthErrorCode, string> = {
   INVALID_CREDENTIALS: "E-mail ou senha inválidos.",
@@ -20,36 +20,36 @@ const UI_MESSAGES: Record<AuthErrorCode, string> = {
   WEAK_PASSWORD: "A senha é muito fraca. Use pelo menos 6 caracteres.",
   RATE_LIMITED: "Muitas tentativas. Tente novamente em alguns minutos.",
   NETWORK: "Sem conexão. Verifique sua internet.",
-  UNKNOWN: "Não foi possível entrar. Tente novamente.",
+  UNKNOWN: "Não foi possível enviar as instruções. Tente novamente.",
 };
 
-export function useLogin() {
+export function usePasswordReset() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (data: LoginFormData) => {
+  const handleRequestReset = async (data: PasswordResetRequestFormData) => {
     try {
       setIsLoading(true);
-      await loginUseCase.execute(data);
+      await requestPasswordResetUseCase.execute(data);
+      router.push({
+        pathname: "/verify-recovery-code",
+        params: { email: data.email.trim().toLowerCase() },
+      } as any);
     } catch (error) {
       const code = error instanceof AuthError ? error.code : "UNKNOWN";
-
-      if (code === "EMAIL_NOT_CONFIRMED") {
-        router.push({
-          pathname: "/confirm-email",
-          params: { email: data.email.trim().toLowerCase() },
-        } as any);
-        return;
-      }
-
-      Alert.alert("Erro ao entrar", UI_MESSAGES[code]);
+      Alert.alert("Erro na recuperação", UI_MESSAGES[code]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const goBackToLogin = () => {
+    router.replace("/login");
+  };
+
   return {
-    handleLogin,
+    handleRequestReset,
+    goBackToLogin,
     isLoading,
   };
 }
